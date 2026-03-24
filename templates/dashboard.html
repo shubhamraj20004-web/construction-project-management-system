@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3 class="mb-3">Dashboard</h3>
+<p class="text-muted">Role: {{ role }}</p>
+
+<hr>
+
+<!-- ================= ADMIN ================= -->
+{% if role == 'Admin' %}
+
+<div class="card p-3 shadow mb-4">
+<h5>Create Project</h5>
+
+<form method="POST" action="/create_project" class="row g-2">
+
+<input name="name" class="form-control" placeholder="Project Name" required>
+<input name="deadline" class="form-control" placeholder="Deadline" required>
+<input name="funds" class="form-control" placeholder="Funds" required>
+
+<select name="contractor_id" class="form-control">
+{% for c in contractors %}
+<option value="{{ c.id }}">{{ c.username }}</option>
+{% endfor %}
+</select>
+
+<button class="btn btn-primary">Create</button>
+
+</form>
+</div>
+
+<div class="card p-3 shadow">
+<h5>Project Monitor</h5>
+
+<select id="projectSelect" class="form-control mb-3" onchange="showProject()">
+<option>Select Project</option>
+{% for p in projects %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+
+{% for p in projects %}
+<div class="project-box" data-id="{{ p.id }}" style="display:none">
+
+<h5>{{ p.name }}</h5>
+<p>Deadline: {{ p.deadline }}</p>
+<p>Funds: ₹{{ p.funds }}</p>
+
+<b>Labours</b>
+<ul>
+{% for a in assignments %}
+{% if a.project_id == p.id %}
+<li>{{ a.labour_id }} | ₹{{ a.total_wage }}</li>
+{% endif %}
+{% endfor %}
+</ul>
+
+<b>Materials</b>
+<ul>
+{% for m in materials %}
+{% if m.project_id == p.id %}
+<li>{{ m.name }} - ₹{{ m.cost }}</li>
+{% endif %}
+{% endfor %}
+</ul>
+
+</div>
+{% endfor %}
+
+</div>
+
+<script>
+function showProject(){
+let val=document.getElementById("projectSelect").value;
+document.querySelectorAll(".project-box").forEach(p=>{
+p.style.display=(p.dataset.id==val)?"block":"none";
+});
+}
+</script>
+
+{% endif %}
+
+<!-- ================= CONTRACTOR ================= -->
+{% if role == 'Contractor' %}
+
+<div class="row">
+
+<div class="col-md-6">
+
+<div class="card p-3 shadow mb-3">
+<h5>Your Projects</h5>
+{% for p in projects %}
+<div class="border p-2 mb-2">
+<b>{{ p.name }}</b><br>
+Deadline: {{ p.deadline }}
+</div>
+{% endfor %}
+</div>
+
+<div class="card p-3 shadow mb-3">
+<h5>Create Labour</h5>
+<form method="POST" action="/create_labour">
+<input name="name" class="form-control mb-2" placeholder="Labour Name">
+<button class="btn btn-success w-100">Create</button>
+</form>
+</div>
+
+<div class="card p-3 shadow">
+<h5>Assign Labour</h5>
+<form method="POST" action="/assign_labour">
+
+<select name="labour_id" class="form-control mb-2">
+{% for l in labours %}
+<option value="{{ l.id }}">{{ l.name }}</option>
+{% endfor %}
+</select>
+
+<select name="project_id" class="form-control mb-2">
+{% for p in projects %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+
+<input name="role" class="form-control mb-2" placeholder="Role">
+<input name="daily_wage" class="form-control mb-2" placeholder="Daily Wage">
+
+<button class="btn btn-primary w-100">Assign</button>
+</form>
+</div>
+
+</div>
+
+<div class="col-md-6">
+
+<div class="card p-3 shadow mb-3">
+<h5>Attendance</h5>
+<form method="POST" action="/mark_attendance">
+<select name="labour_id" class="form-control mb-2">
+{% for l in labours %}
+<option value="{{ l.id }}">{{ l.name }}</option>
+{% endfor %}
+</select>
+
+<select name="project_id" class="form-control mb-2">
+{% for p in projects %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+
+<select name="status" class="form-control mb-2">
+<option>Present</option>
+<option>Absent</option>
+</select>
+
+<button class="btn btn-warning w-100">Mark</button>
+</form>
+</div>
+
+<div class="card p-3 shadow">
+<h5>Add Material</h5>
+<form method="POST" action="/add_material">
+<select name="project_id" class="form-control mb-2">
+{% for p in projects %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+
+<input name="name" class="form-control mb-2" placeholder="Material">
+<input name="cost" class="form-control mb-2" placeholder="Cost">
+
+<button class="btn btn-dark w-100">Add</button>
+</form>
+</div>
+
+</div>
+
+</div>
+
+{% endif %}
+
+<!-- ================= LABOUR ================= -->
+{% if role == 'Labour' %}
+
+<div class="card p-3 shadow">
+
+<h4>My Dashboard</h4>
+
+<ul>
+{% for a in assignments %}
+<li>
+Project {{ a.project_id }} |
+Role: {{ a.role }} |
+Daily: ₹{{ a.daily_wage }} |
+Total: ₹{{ a.total_wage }}
+</li>
+{% endfor %}
+</ul>
+
+<h5>Attendance</h5>
+<ul>
+{% for at in attendance %}
+<li>{{ at.date }} → {{ at.status }}</li>
+{% endfor %}
+</ul>
+
+</div>
+
+{% endif %}
+
+{% endblock %}
